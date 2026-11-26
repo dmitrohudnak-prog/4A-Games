@@ -10,12 +10,13 @@ bot = telebot.TeleBot(BOT_TOKEN)
 ADVICE_BUTTON = "Попросити пораду в дорогу"
 DIRECTION_BUTTON = "Запитати про напрямок"
 
-GUIDE_REPLIES = [
-    "Туман розвіється, варто лише зробити перший крок у невідоме. Куди прямуєш сьогодні?",
-    "Цікава думка, подорожній.",
-    "Зірки підказують, що відповідь ближче, ніж здається.",
-    "Навіть найдовша дорога починається з одного впевненого кроку.",
-]
+SECRET_WORD = "артефакт"
+SECRET_TEXT = (
+    "Ти знайшов таємний знак провідника, {name}!\n\n"
+    "У стародавній скрині на роздоріжжі лежить Компас Істини. "
+    "Він не вказує на північ — він вказує туди, де ти справді хочеш бути. "
+    "Зберігай цю таємницю!"
+)
 
 ADVICE_REPLIES = [
     "Порада в дорогу: візьми з собою тишу. Вона підкаже більше, ніж будь-яка мапа.",
@@ -29,6 +30,13 @@ DIRECTION_REPLIES = [
     "Північ кличе тих, хто шукає ясність. Південь — тих, хто шукає тепло. Обидва шляхи правдиві, якщо йдеш усвідомлено.",
     "Зірки не вказують одну стежку. Вони лише нагадують: ти вже стоїш на початку.",
     "Якщо не знаєш, куди йти — зроби крок у бік світла, яке ще не згасло.",
+]
+
+DEFAULT_REPLIES = [
+    "Цікаві слова, {name}. Розкажи більше або обери дію в меню.",
+    "Вітер доносить твої думки, {name}, але шлях поки неясний. Куди рушимо далі?",
+    "Я уважно слухаю тебе, {name}. Якщо потрібна порада чи напрямок — просто натисни кнопку.",
+    "{name}, кожна розмова на привалі має свій сенс. Що саме тебе зараз хвилює?",
 ]
 
 MOOD_REPLIES = {
@@ -81,6 +89,15 @@ def mood_reply(text):
 def handle_text(message):
     text = (message.text or "").strip()
     lowered = text.lower()
+    user_name = message.from_user.first_name or "мандрівнику"
+
+    if lowered == SECRET_WORD:
+        bot.send_message(
+            message.chat.id,
+            SECRET_TEXT.format(name=user_name),
+            reply_markup=guide_menu(),
+        )
+        return
 
     if command_name(lowered) == "/start":
         bot.send_message(message.chat.id, START_TEXT, reply_markup=guide_menu())
@@ -99,7 +116,8 @@ def handle_text(message):
         bot.send_message(message.chat.id, reply, reply_markup=guide_menu())
         return
 
-    bot.send_message(message.chat.id, random.choice(GUIDE_REPLIES), reply_markup=guide_menu())
+    default_text = random.choice(DEFAULT_REPLIES).format(name=user_name)
+    bot.send_message(message.chat.id, default_text, reply_markup=guide_menu())
 
 
 if __name__ == "__main__":
